@@ -34,9 +34,9 @@ jobs:
     - name: Configure build
       run: |
         cd immortalwrt
-        cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步
         make defconfig
-
+  #cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步
+        
     - name: Build ImmortalWRT
       run: |
         cd immortalwrt
