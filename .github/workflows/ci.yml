@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: openwrt-23.05
+  REPO_BRANCH: immortalwrt-23.05
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   UPLOAD_BIN_DIR: true
@@ -46,16 +46,26 @@ jobs:
         make defconfig
   #cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步    或者配置.sh文件添加插件的源码 并修改.config文件->再用make编译！(make是根据.config文件来确定要编译的东西的！)
         
-    - name: Build ImmortalWRT
+    - name: 编译固件
+      id: compile
       run: |
         cd immortalwrt
-        make -j$(nproc)
-        
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "status=success" >> ${GITHUB_OUTPUT}
+
+    - name: 检查磁盘空间
+      if: (!cancelled())
+      run: df -hT
+
     - name: 上传 bin 文件夹
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: openwrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: immortalwrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: immortalwrt/bin
 
     - name: 整理固件文件
@@ -71,7 +81,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: immortalwrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: 生成发布标签
@@ -89,7 +99,7 @@ jobs:
 
         ⏱️ 编译时间: $(date +"%Y年%m月%d日%H时%M分")
 
-        🌐 管理地址: 不知道 , 子网掩码: 255.255.252.0
+        🌐 管理地址: 10.0.0.1 , 子网掩码: 255.255.252.0
 
         👤 用户名: root
 
@@ -100,7 +110,7 @@ jobs:
 
     - name: 自动发布固件到 Releases
       uses: softprops/action-gh-release@master
-    #if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: steps.tag.outputs.status == 'success' && !cancelled()
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
