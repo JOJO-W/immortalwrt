@@ -1,0 +1,43 @@
+name: Build ImmortalWRT
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext zlib1g-dev file python3
+
+    - name: Clone ImmortalWRT
+      run: |
+        git clone https://github.com/JOJO-W/immortalwrt.git
+        cd immortalwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Configure build
+      run: |
+        cd immortalwrt
+        cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步
+        make defconfig
+
+    - name: Build ImmortalWRT
+      run: |
+        cd immortalwrt
+        make -j$(nproc)
