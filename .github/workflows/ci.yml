@@ -35,7 +35,7 @@ jobs:
       run: |
         cd immortalwrt
         make defconfig
-  #cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步
+  #cp ./config.example .config  # 使用预定义的配置文件，你可以根据需要更改这一步    或者配置.sh文件添加插件的源码 并修改.config文件->再用make编译！(make是根据.config文件来确定要编译的东西的！)
         
     - name: Build ImmortalWRT
       run: |
