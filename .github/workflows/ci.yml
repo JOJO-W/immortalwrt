@@ -14,7 +14,6 @@ env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: immortalwrt-23.05
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: .config
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
